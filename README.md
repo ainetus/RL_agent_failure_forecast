@@ -53,8 +53,12 @@ Check [Configuration](#configuration) Section to set up the .env file.
 Download the .zip archives, unpack them into the root folder and run:
 
 ```bash
-python run_pipeline.py
 python run_example.py
+```
+
+To train everything from scratch, use:
+```bash
+python run_pipeline.py
 ```
 
 The active workflow uses:
