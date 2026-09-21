@@ -65,10 +65,7 @@ By default, rollout bundles are written to:
 artifacts/<ENV_NAME>/<agent>/rollouts/
 |-- observations.npy
 |-- labels.npy
-|-- actions.npy
-|-- train.npz
-|-- validation.npz
-`-- test.npz
+`-- actions.npy
 ```
 
 `actions.npy` contains distinct action vectors in stable first-observed order.
@@ -76,6 +73,10 @@ artifacts/<ENV_NAME>/<agent>/rollouts/
 observation.
 
 At least two distinct policy actions are required for meaningful ENN training.
+
+When copying artifacts between machines, copy the contents into the existing
+`artifacts/` directory. Do not copy the directory itself into `artifacts/`,
+which creates an unintended `artifacts/artifacts/` tree.
 
 ## ENN Training
 
@@ -142,6 +143,7 @@ Run:
 ```bash
 python tests/validate_module.py
 python tests/test_api.py
+python tests/test_failure_forecast.py
 ```
 
 `tests/validate_module.py` checks the uncertainty module with a synthetic ENN.
@@ -150,3 +152,61 @@ Grid2Op assets.
 
 A live Grid2Op validation requires the target environment dataset, active agent
 assets, trained ENN artifacts, and the pinned Grid2Op/LightSim dependency stack.
+
+## Failure Forecasting
+
+The active module-only failure forecast predicts whether the configured RL agent
+will fail one hour ahead after a candidate line disconnection. It ports the
+legacy archive forecast path: historical t/1h/1d/1w features, t+12 mean and
+aleatoric forecasters, `_forecasted_inj` power-flow simulation, and HGB failure
+classification.
+
+Run the full pipeline:
+
+```bash
+python training/run_failure_forecast_pipeline.py \
+  --agent-artifact-dir artifacts/<ENV_NAME>/<AGENT_NAME> \
+  --policy-agent-dir assets/<ENV_NAME> \
+  --episodes 50 \
+  --lines line_a,line_b \
+  --smoke-line line_a
+```
+
+Train the mean and aleatoric forecast models:
+
+```bash
+python training/train_failure_forecasters.py \
+  --agent-artifact-dir artifacts/<ENV_NAME>/<AGENT_NAME> \
+  --episodes 50
+```
+
+Collect rows:
+
+```bash
+python training/collect_failure_forecast.py \
+  --mean-model artifacts/<ENV_NAME>/<AGENT_NAME>/failure_forecast/mean_forecaster.pkl \
+  --aleatoric-model artifacts/<ENV_NAME>/<AGENT_NAME>/failure_forecast/aleatoric_forecaster.pkl \
+  --episodes 50 \
+  --lines line_a,line_b
+```
+
+Train the classifier:
+
+```bash
+python training/train_failure_forecast.py
+```
+
+Smoke-test one prediction:
+
+```bash
+python training/predict_failure_forecast.py \
+  --mean-model artifacts/<ENV_NAME>/<AGENT_NAME>/failure_forecast/mean_forecaster.pkl \
+  --aleatoric-model artifacts/<ENV_NAME>/<AGENT_NAME>/failure_forecast/aleatoric_forecaster.pkl \
+  --line line_a
+```
+
+Artifacts are written under:
+
+```text
+artifacts/<ENV_NAME>/<AGENT_NAME>/failure_forecast/
+```
