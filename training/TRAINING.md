@@ -141,14 +141,12 @@ vectors.
 Run:
 
 ```bash
-python tests/validate_module.py
-python tests/test_api.py
-python tests/test_failure_forecast.py
+python -m unittest discover -s tests -v
 ```
 
-`tests/validate_module.py` checks the uncertainty module with a synthetic ENN.
-`tests/test_api.py` validates the FastAPI response shape without requiring real
-Grid2Op assets.
+The fast suite covers ENN inference and calibration, the API contract, and the
+failure-forecast classifier without requiring trained production artifacts or a
+live Grid2Op environment.
 
 A live Grid2Op validation requires the target environment dataset, active agent
 assets, trained ENN artifacts, and the pinned Grid2Op/LightSim dependency stack.
@@ -160,6 +158,19 @@ will fail one hour ahead after a candidate line disconnection. It ports the
 legacy archive forecast path: historical t/1h/1d/1w features, t+12 mean and
 aleatoric forecasters, `_forecasted_inj` power-flow simulation, and HGB failure
 classification.
+
+Forecast training pairs each historical feature vector at `t` with the true
+load/generation injections at `t+12`. Failure-row collection then creates one
+common forecasted future state, disconnects every configured line independently,
+and asks the configured agent to act on each resulting contingency observation.
+Runtime uses the same post-contingency HGB feature schema but does not run the
+agent. `FailureForecastPredictor.predict_many()` returns one probability and
+binary prediction per candidate line using the single trained classifier.
+
+The same `AGENT_FACTORY=module:function` configuration used by rollout
+collection applies to failure-forecast data collection. The factory can return
+any compatible object exposing `act(...)`; the bundled CurriculumAgent path is
+only the default when no factory is configured.
 
 Run the full pipeline:
 
