@@ -216,6 +216,15 @@ python training/train_mean_and_aleatoric.py \
   --episodes 50
 ```
 
+Mean-forecaster tuning is checkpointed in
+`mean_forecaster_best_params.json` before the full-data fit. A rerun resumes
+from those parameters when the model is missing. Output models are fitted
+sequentially by default with four native HGB threads; the default environment
+has 96 outputs, while other environments may differ. Configure
+`FORECAST_HGB_THREADS` when the server has different CPU limits. Existing mean
+and aleatoric models are reused when possible. Use `--force-retune` to ignore
+both reusable models and the tuning checkpoint and retrain both forecasters.
+
 Collect rows:
 
 ```bash
@@ -233,7 +242,7 @@ collected rows under
 Train the classifier:
 
 ```bash
-python training/train_failure_classifyer.py
+python training/train_faillure_classifyer.py
 ```
 
 Smoke-test one prediction:
@@ -267,6 +276,7 @@ artifacts/<ENV_NAME>/<AGENT_NAME>/failure_forecast/
 |-- forecast_X.npy
 |-- forecast_y.npy
 |-- forecast_episode_ids.npy
+|-- mean_forecaster_best_params.json
 |-- mean_forecaster.pkl
 |-- aleatoric_forecaster.pkl
 |-- failure_forecast_rows.csv
