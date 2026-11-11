@@ -45,8 +45,8 @@ To run all active ENN and failure-forecast training stages from `.env`, use:
 python run_pipeline.py
 ```
 
-The original pipeline implementation is archived under
-`archive/legacy/old_version/`; the root `run_pipeline.py` is the active
+The original pipeline implementation is available only in Git history at
+commit `08781bf` (14 August 2026); the root `run_pipeline.py` is the active
 orchestrator.
 
 ## Rollout Collection
@@ -242,7 +242,7 @@ collected rows under
 Train the classifier:
 
 ```bash
-python training/train_faillure_classifyer.py
+python training/train_failure_classifier.py
 ```
 
 Smoke-test one prediction:
